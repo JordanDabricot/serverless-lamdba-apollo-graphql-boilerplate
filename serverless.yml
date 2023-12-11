@@ -1,0 +1,65 @@
+service: poc-apollo-user-service
+
+plugins:
+  - serverless-offline
+  - serverless-dynamodb
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PartiQLSelect
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:275182612554:table/UserServicePoc"
+
+functions:
+  user-service:
+    handler: src/index.handler
+    provisionedConcurrency: 1
+    reservedConcurrency: 5
+    events:
+      - httpApi:
+          path: /
+          method: POST
+      - httpApi:
+          path: /
+          method: GET
+
+custom:
+  serverless-dynamodb:
+    start:
+      docker: true
+      host: dynamodb # or the name of your Dynamo docker container
+      port: 8000 # the port of our Dynamo docker container
+      noStart: true
+      migrate: true
+      seed: true
+    seed:
+      movie-service:
+        sources:
+          - table: UserExampleTable
+            sources: [ ./.dynamodb/seeds/user-service-seed.json ]
+  serverless-offline:
+    httpPort: 3000
+
+resources:
+  Resources:
+    UserServicePoc:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UserExampleTable
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
