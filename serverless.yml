@@ -1,4 +1,4 @@
-service: poc-apollo-user-service
+service: serverless-lamdba-boilerplate
 
 plugins:
   - serverless-offline
@@ -17,15 +17,10 @@ provider:
 functions:
   user-service:
     handler: src/index.handler
-    provisionedConcurrency: 1
-    reservedConcurrency: 5
     events:
       - httpApi:
           path: /
           method: POST
-      - httpApi:
-          path: /
-          method: GET
 
 custom:
   serverless-dynamodb:
